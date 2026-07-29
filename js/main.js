@@ -188,19 +188,25 @@
     o1.stop(when + 2.5); o2.stop(when + 2.5);
   }
 
-  // gentle, wind-touched arpeggio that loops while playing
+  // gentle wedding melody in Mohanam raga (original, loops while playing)
+  const MELODY = [
+    [3,1],[4,1],[5,2],[4,1],[3,1],[2,2],
+    [3,1],[2,1],[1,2],[0,2],
+    [2,1],[3,1],[4,2],[3,1],[2,1],[1,2],[0,4]
+  ];
   function scheduleChimes() {
-    const play = () => {
+    const beat = 0.42;
+    const playPhrase = () => {
       if (!playing || !audioCtx) return;
-      const now = audioCtx.currentTime;
-      const n = 1 + Math.floor(Math.random() * 2);
-      for (let i = 0; i < n; i++) {
-        const f = CHIME_NOTES[Math.floor(Math.random() * CHIME_NOTES.length)];
-        strike(f, now + i * 0.13, 0.18 + Math.random() * 0.08);
+      const start = audioCtx.currentTime + 0.06;
+      let t = 0;
+      for (const [idx, beats] of MELODY) {
+        strike(CHIME_NOTES[idx], start + t * beat, 0.2);
+        t += beats;
       }
-      chimeTimer = setTimeout(play, 900 + Math.random() * 1500);
+      chimeTimer = setTimeout(playPhrase, (t * beat + 1.4) * 1000);
     };
-    play();
+    playPhrase();
   }
 
   muteBtn.addEventListener('click', () => {
