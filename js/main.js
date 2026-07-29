@@ -149,36 +149,69 @@
     }, { passive: true });
   }
 
-  /* ---------- Ambient tone (opt-in, WebAudio — no external file) ---------- */
+  /* ---------- Wedding chimes (opt-in, WebAudio — no external file) ---------- */
   const muteBtn = document.getElementById('muteToggle');
-  let audioCtx = null, gain = null, playing = false;
+  let audioCtx = null, master = null, delay = null, chimeTimer = null, playing = false;
+
+  // pleasant pentatonic bell scale (Hz) — C5 D5 E5 G5 A5 C6
+  const CHIME_NOTES = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+
   function buildAudio() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    gain = audioCtx.createGain();
-    gain.gain.value = 0.0;
-    gain.connect(audioCtx.destination);
-    // soft shimmering drone: two detuned oscillators through a slow LFO
-    [220, 277.18, 329.63].forEach((f, i) => {
-      const o = audioCtx.createOscillator();
-      o.type = 'sine';
-      o.frequency.value = f;
-      const g = audioCtx.createGain();
-      g.gain.value = 0.05 / (i + 1);
-      const lfo = audioCtx.createOscillator();
-      lfo.frequency.value = 0.07 + i * 0.03;
-      const lfoGain = audioCtx.createGain();
-      lfoGain.gain.value = 0.03;
-      lfo.connect(lfoGain); lfoGain.connect(g.gain);
-      o.connect(g); g.connect(gain);
-      o.start(); lfo.start();
-    });
+    master = audioCtx.createGain();
+    master.gain.value = 0.0;
+    const lp = audioCtx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 5200;
+    // sparkle: gentle feedback delay
+    delay = audioCtx.createDelay(1.0);
+    delay.delayTime.value = 0.33;
+    const fb = audioCtx.createGain(); fb.gain.value = 0.3;
+    delay.connect(fb); fb.connect(delay);
+    master.connect(lp);
+    lp.connect(audioCtx.destination);
+    lp.connect(delay);
+    delay.connect(audioCtx.destination);
   }
+
+  // one bell strike: fundamental + octave shimmer, fast attack, long decay
+  function strike(freq, when, vel) {
+    const o1 = audioCtx.createOscillator(); o1.type = 'triangle'; o1.frequency.value = freq;
+    const o2 = audioCtx.createOscillator(); o2.type = 'sine';     o2.frequency.value = freq * 2.01;
+    const g  = audioCtx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(vel, when + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 2.4);
+    const g2 = audioCtx.createGain(); g2.gain.value = 0.35;
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    g.connect(master);
+    o1.start(when); o2.start(when);
+    o1.stop(when + 2.5); o2.stop(when + 2.5);
+  }
+
+  // gentle, wind-touched arpeggio that loops while playing
+  function scheduleChimes() {
+    const play = () => {
+      if (!playing || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const n = 1 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < n; i++) {
+        const f = CHIME_NOTES[Math.floor(Math.random() * CHIME_NOTES.length)];
+        strike(f, now + i * 0.13, 0.18 + Math.random() * 0.08);
+      }
+      chimeTimer = setTimeout(play, 900 + Math.random() * 1500);
+    };
+    play();
+  }
+
   muteBtn.addEventListener('click', () => {
     if (!audioCtx) buildAudio();
     if (audioCtx.state === 'suspended') audioCtx.resume();
     playing = !playing;
     muteBtn.setAttribute('aria-pressed', String(playing));
-    gain.gain.linearRampToValueAtTime(playing ? 0.14 : 0.0, audioCtx.currentTime + 0.8);
+    master.gain.cancelScheduledValues(audioCtx.currentTime);
+    master.gain.linearRampToValueAtTime(playing ? 0.6 : 0.0, audioCtx.currentTime + 0.4);
+    if (playing) scheduleChimes();
+    else if (chimeTimer) { clearTimeout(chimeTimer); chimeTimer = null; }
   });
 
   /* ---------- Theme switch (blue / green) ---------- */
