@@ -245,7 +245,7 @@ body::after{
 .event-item{display:flex;flex-direction:column;align-items:center;gap:.25rem}
 .event-item__ico{color:var(--gold);font-size:1rem}
 .event-item__k{font-family:var(--marc);letter-spacing:.28em;text-transform:uppercase;font-size:.62rem;color:var(--gold)}
-.event-item__v{font-family:var(--serif);font-size:1.05rem;color:var(--cream);line-height:1.2}
+.event-item__v{font-family:var(--serif);font-size:1.35rem;color:var(--cream);line-height:1.2}
 .event-item__v .ampm{font-family:var(--marc);font-size:.55em;letter-spacing:.08em;color:var(--gold-soft);margin-left:.18em;vertical-align:baseline}
 .event-item--big{padding:0 clamp(1rem,4vw,2rem);border-left:1px solid rgba(216,178,90,.25);
   border-right:1px solid rgba(216,178,90,.25)}
@@ -297,7 +297,7 @@ body::after{
   .event-card__row{gap:.5rem}
   .event-item__date{font-size:clamp(2.8rem,16vw,3.6rem)}
   .event-item--big{padding:0 .65rem}
-  .event-item__v{font-size:.92rem}
+  .event-item__v{font-size:1.12rem}
   .event-item__k{font-size:.56rem;letter-spacing:.2em}
   .countdown{gap:.45rem}
   .cd{min-width:0;flex:1 1 21%;padding:.85rem .25rem}
